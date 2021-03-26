@@ -7,6 +7,7 @@ col = 4
 S = np.zeros((row, col))
 S[0][3] = 1
 S[1][3] = -100
+forbidden = [1, 1]
 
 V = np.zeros((row, col))
 
@@ -28,12 +29,19 @@ Mirror = {
     "bas": "haut"
 }
 
+NumberToAction = {
+    0: "bas",
+    1: "haut",
+    2: "gauche",
+    3: "droite"
+}
+
 def MoveUp(state):
     state_copy = copy.deepcopy(state)
     if state_copy[0] == 0:
         return False
     state_copy[0] = state[0] - 1
-    if state_copy != [1, 1]:
+    if state_copy != forbidden:
         return True
     return False
 
@@ -43,7 +51,7 @@ def MoveDown(state):
     if state_copy[0] >= len(S) - 1:
         return False
     state_copy[0] = state[0] + 1
-    if state_copy != [1, 1]:
+    if state_copy != forbidden:
         return True
     return False
 
@@ -53,7 +61,7 @@ def MoveLeft(state):
     if state_copy[1] == 0:
         return False
     state_copy[1] = state[1] - 1
-    if state_copy != [1, 1]:
+    if state_copy != forbidden:
         return True
     return False
 
@@ -62,7 +70,7 @@ def MoveRight(state):
     if state_copy[1] >= len(S[0]) - 1:
         return False
     state_copy[1] = state[1] + 1
-    if state_copy != [1, 1]:
+    if state_copy != forbidden:
         return True
     return False
 
@@ -154,10 +162,35 @@ def ValueIteration(nbIter, s, v):
     for val in range(nbIter):
         for i in range(row):
             for j in range(col):
-                if [i, j] == [1, 1]:
+                if [i, j] == forbidden:
                     continue
                 v_copy[i][j] = Reward([i, j], s, v_copy)
     return v_copy
 
 
-print(ValueIteration(100, S, V))
+def extract_policy(value_table):
+    policy = np.zeros((row, col))
+
+    for i in range(row):
+        for j in range(col):
+            values = []
+            for action in A:
+                tmp = 0
+                ChangeP(action)
+                for current_action in WhichDirections([i, j]):
+                    new_state = ConvertActionToState([i, j], current_action)
+                    tmp = tmp + P[Mirror[current_action[1]]] * (S[new_state[0]][new_state[1]] + alpha * value_table[new_state[0]][new_state[1]])
+                values.append(tmp)
+                policy[i][j] = np.argmax(np.array(values))
+    return policy
+
+
+bestPolicy = extract_policy(ValueIteration(100, S, V))
+bestPolicyConverted = []
+for i in range(row):
+    tmp = []
+    for j in range(col):
+         tmp.append(NumberToAction[bestPolicy[i][j]])
+    bestPolicyConverted.append(tmp)
+
+print(np.asarray(bestPolicyConverted))
