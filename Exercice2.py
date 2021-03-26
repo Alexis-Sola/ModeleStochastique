@@ -122,28 +122,6 @@ def ChangeP(direction):
     P[Mirror[direction]] = 0.0
 
 
-# def V2(state, s, v):
-#     if state == [3, 3] or s[state[0]][state[1]] < 0:
-#         return s[state[0]][state[1]], s
-#
-#     tab_actions = []
-#     for action in A:
-#         tmp = 0
-#         ChangeP(action)
-#         for avaible_action in WhichDirections(state):
-#             new_state = ConvertActionToState(state, avaible_action)
-#
-#             if s[new_state[0]][new_state[1]] <= 0:
-#                 continue
-#
-#             tmp = tmp + P[Mirror[avaible_action]] * V(new_state, s, v)[0]
-#         tab_actions.append(tmp)
-#
-#     v_state = s[state[0]][state[1]] + alpha * max(tab_actions)
-#     s[state[0]][state[1]] = v_state
-#     return v_state, s
-
-
 def Reward(state, s, v):
     tab_actions = []
     for action in A:
@@ -156,6 +134,7 @@ def Reward(state, s, v):
 
     v_state = s[state[0]][state[1]] + alpha * max(tab_actions)
     return v_state
+
 
 def ValueIteration(nbIter, s, v):
     v_copy = copy.deepcopy(v)
