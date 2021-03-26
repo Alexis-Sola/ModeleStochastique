@@ -172,4 +172,5 @@ for i in range(row):
          tmp.append(NumberToAction[bestPolicy[i][j]])
     bestPolicyConverted.append(tmp)
 
+print(bestPolicy)
 print(np.asarray(bestPolicyConverted))
