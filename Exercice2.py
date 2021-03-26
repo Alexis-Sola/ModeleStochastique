@@ -1,8 +1,14 @@
 import copy
+import numpy as np
 import random
 
-S = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, -100], [0, 0, 0, 1]]
-V = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+row = 3
+col = 4
+S = np.zeros((row, col))
+S[0][3] = 1
+S[1][3] = -100
+
+V = np.zeros((row, col))
 
 alpha = 0.9
 A = ["haut", "bas", "droite", "gauche"]
@@ -22,29 +28,43 @@ Mirror = {
     "bas": "haut"
 }
 
-
 def MoveUp(state):
-    if state[0] == 0:
+    state_copy = copy.deepcopy(state)
+    if state_copy[0] == 0:
         return False
-    return True
+    state_copy[0] = state[0] - 1
+    if state_copy != [1, 1]:
+        return True
+    return False
 
 
 def MoveDown(state):
-    if state[0] >= len(S) - 1:
+    state_copy = copy.deepcopy(state)
+    if state_copy[0] >= len(S) - 1:
         return False
-    return True
+    state_copy[0] = state[0] + 1
+    if state_copy != [1, 1]:
+        return True
+    return False
 
 
 def MoveLeft(state):
-    if state[1] == 0:
+    state_copy = copy.deepcopy(state)
+    if state_copy[1] == 0:
         return False
-    return True
-
+    state_copy[1] = state[1] - 1
+    if state_copy != [1, 1]:
+        return True
+    return False
 
 def MoveRight(state):
-    if state[1] >= len(S[0]) - 1:
+    state_copy = copy.deepcopy(state)
+    if state_copy[1] >= len(S[0]) - 1:
         return False
-    return True
+    state_copy[1] = state[1] + 1
+    if state_copy != [1, 1]:
+        return True
+    return False
 
 
 def AuthorizeMove(state, direction):
@@ -62,16 +82,16 @@ def AuthorizeMove(state, direction):
 
 def ConvertActionToState(state, direction):
     new_state = copy.deepcopy(state)
-    if direction[1] == "haut" and direction[0] == "move":
+    if direction[1] == "haut" and direction[0] == "move" and MoveUp(state):
         new_state[0] = state[0] - 1
-    elif direction[1] == "bas" and direction[0] == "move":
+    elif direction[1] == "bas" and direction[0] == "move" and MoveDown(state):
         new_state[0] = state[0] + 1
-    elif direction[1] == "droite" and direction[0] == "move":
+    elif direction[1] == "droite" and direction[0] == "move" and MoveRight(state):
         new_state[1] = state[1] + 1
-    elif direction[1] == "gauche" and direction[0] == "move":
+    elif direction[1] == "gauche" and direction[0] == "move" and MoveLeft(state):
         new_state[1] = state[1] - 1
     elif direction[0] == "rester":
-        new_state = state
+        return state
     return new_state
 
 
@@ -118,7 +138,6 @@ def ChangeP(direction):
 
 def Reward(state, s, v):
     tab_actions = []
-
     for action in A:
         tmp = 0
         ChangeP(action)
@@ -130,13 +149,15 @@ def Reward(state, s, v):
     v_state = s[state[0]][state[1]] + alpha * max(tab_actions)
     return v_state
 
-
 def ValueIteration(nbIter, s, v):
     v_copy = copy.deepcopy(v)
-    for i in range(nbIter):
-        for row in range(len(s)):
-            for col in range(len(s)):
-                v_copy[row][col] = Reward([row, col], s, v_copy)
+    for val in range(nbIter):
+        for i in range(row):
+            for j in range(col):
+                if [i, j] == [1, 1]:
+                    continue
+                v_copy[i][j] = Reward([i, j], s, v_copy)
     return v_copy
+
 
 print(ValueIteration(100, S, V))
