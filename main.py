@@ -1,3 +1,5 @@
+import numpy as np
+
 # Match nodes to their levels
 levels = [[1], [2, 3, 4], [5, 6, 7], [8, 9, 10]]
 
@@ -36,6 +38,8 @@ links = {
     "7-->10": 4, "10-->7": 4,
 }
 
+way = []
+
 # Returns value of weith between 2 nodes if a link exist
 def GetWeight(begin, end):
     arrow = "-->"
@@ -69,6 +73,11 @@ def GetPreviousNodes(node):
             new_tab.append(val)
     return new_tab
 
+def FindNode(w, val):
+    for i in range(len(w)):
+        if w[i] == val:
+            return w[i]
+
 # Calculate the optimum cost of node
 def V(node):
     linked_node = GetPreviousNodes(node)
@@ -94,7 +103,19 @@ def ReverseRecur(level):
     max_per_nodes = []
     for node in nodes:
         max_per_nodes.append(V(node))
-    return max(max_per_nodes)
+    return max_per_nodes
 
 
-print(ReverseRecur(3))
+def ExtractPolicy():
+    policy = [1]
+
+    for i in range(len(levels)):
+        if i > 0:
+            r = ReverseRecur(i)
+            argmax = np.argmax(np.array(r))
+            policy.append(levels[i][argmax])
+    return policy
+
+
+r = ExtractPolicy()
+print(r)
