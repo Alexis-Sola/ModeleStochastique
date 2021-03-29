@@ -117,5 +117,7 @@ def ExtractPolicy():
     return policy
 
 
-r = ExtractPolicy()
-print(r)
+v = max(ReverseRecur(3))
+print("Coût maximal :", v)
+p = ExtractPolicy()
+print("Chemin :", p)

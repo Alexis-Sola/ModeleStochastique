@@ -1,16 +1,16 @@
 import copy
 import numpy as np
-import random
 
+#Initiliser le plateau
 row = 3
 col = 4
+#Plateau S
 S = np.zeros((row, col))
 S[0][3] = 1
 S[1][3] = -100
 forbidden = [1, 1]
 
 V = np.zeros((row, col))
-
 alpha = 0.9
 A = ["haut", "bas", "droite", "gauche"]
 
@@ -35,6 +35,7 @@ NumberToAction = {
     2: "gauche",
     3: "droite"
 }
+
 
 def MoveUp(state):
     state_copy = copy.deepcopy(state)
@@ -74,7 +75,7 @@ def MoveRight(state):
         return True
     return False
 
-
+#On vérifie si l'agent est autorisé à bouger
 def AuthorizeMove(state, direction):
     if direction == "haut":
         return MoveUp(state)
@@ -87,22 +88,22 @@ def AuthorizeMove(state, direction):
     else:
         raise Exception("Direction {0} does not exist.".format(direction))
 
-
+#Permet de bouger l'agent
 def ConvertActionToState(state, direction):
     new_state = copy.deepcopy(state)
-    if direction[1] == "haut" and direction[0] == "move" and MoveUp(state):
+    if direction[1] == "haut" and direction[0] == "move":
         new_state[0] = state[0] - 1
-    elif direction[1] == "bas" and direction[0] == "move" and MoveDown(state):
+    elif direction[1] == "bas" and direction[0] == "move":
         new_state[0] = state[0] + 1
-    elif direction[1] == "droite" and direction[0] == "move" and MoveRight(state):
+    elif direction[1] == "droite" and direction[0] == "move":
         new_state[1] = state[1] + 1
-    elif direction[1] == "gauche" and direction[0] == "move" and MoveLeft(state):
+    elif direction[1] == "gauche" and direction[0] == "move":
         new_state[1] = state[1] - 1
     elif direction[0] == "rester":
         return state
     return new_state
 
-
+#Toutes les directions ou l'agent peut aller
 def WhichDirections(state):
     tab = []
     for direction in A:
@@ -110,10 +111,9 @@ def WhichDirections(state):
             tab.append(["move", direction])
         else:
             tab.append(["rester", direction])
-
     return tab
 
-
+#Change les proba en fonction de la direction entrée
 def ChangeP(direction):
     P[direction] = 0.8
     for val in A:
@@ -121,8 +121,8 @@ def ChangeP(direction):
             P[val] = 0.1
     P[Mirror[direction]] = 0.0
 
-
-def Reward(state, s, v):
+#Calcule la valeur v pour un état
+def ComputeValue(state, s, v):
     tab_actions = []
     for action in A:
         tmp = 0
@@ -130,47 +130,66 @@ def Reward(state, s, v):
         for current_action in WhichDirections(state):
             new_state = ConvertActionToState(state, current_action)
             tmp = tmp + P[Mirror[current_action[1]]] * v[new_state[0]][new_state[1]]
-        tab_actions.append(tmp)
+        tab_actions.append(s[state[0]][state[1]] + alpha * tmp)
 
-    v_state = s[state[0]][state[1]] + alpha * max(tab_actions)
-    return v_state
+    v_state = max(tab_actions)
+    return v_state, tab_actions
 
-
+#Calcul la valeur v optimale pour tous les états
 def ValueIteration(nbIter, s, v):
     v_copy = copy.deepcopy(v)
+    mat_actions = []
     for val in range(nbIter):
         for i in range(row):
             for j in range(col):
                 if [i, j] == forbidden:
                     continue
-                v_copy[i][j] = Reward([i, j], s, v_copy)
-    return v_copy
+                value, tab = ComputeValue([i, j], s, v_copy)
+                v_copy[i][j] = value
+                if val == nbIter - 1:
+                    mat_actions.append(tab)
+    return v_copy, mat_actions
 
 
-def extract_policy(value_table):
-    policy = np.zeros((row, col))
+def InsertValue(valueTable):
+    new_table = []
+    cpt = 0
+    for val in valueTable:
+        if cpt == 5:
+            new_table.append([0])
+        new_table.append(val)
+        cpt = cpt + 1
+    return new_table
 
-    for i in range(row):
-        for j in range(col):
-            values = []
-            for action in A:
-                tmp = 0
-                ChangeP(action)
-                for current_action in WhichDirections([i, j]):
-                    new_state = ConvertActionToState([i, j], current_action)
-                    tmp = tmp + P[Mirror[current_action[1]]] * (S[new_state[0]][new_state[1]] + alpha * value_table[new_state[0]][new_state[1]])
-                values.append(tmp)
-                policy[i][j] = np.argmax(np.array(values))
+#Calcule la politique optimale à suivre pour obtenir le reward
+def ExtractPolicy(value_table):
+    value_table = InsertValue(value_table)
+    policy = []
+    tmp = []
+    cpt = 1
+    i = 0
+    for val in value_table:
+        if cpt % 5 == 0:
+            policy.append(tmp)
+            tmp = []
+            cpt = 1
+        tmp.append(np.argmax(np.array(val)))
+        cpt = cpt + 1
+        i = i + 1
+    policy.append(tmp)
     return policy
 
 
-bestPolicy = extract_policy(ValueIteration(100, S, V))
+valueIter, tab = ValueIteration(100, S, V)
+bestPolicy = ExtractPolicy(tab)
 bestPolicyConverted = []
+#Convertit un nombre en une action
 for i in range(row):
     tmp = []
     for j in range(col):
          tmp.append(NumberToAction[bestPolicy[i][j]])
     bestPolicyConverted.append(tmp)
 
-print(bestPolicy)
+bestPolicyConverted[1][1] = "no action"
+print(valueIter)
 print(np.asarray(bestPolicyConverted))
